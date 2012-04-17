@@ -89,7 +89,7 @@ def ufotab_to_sixcols(inpath, outpath):
     inf = open(inpath, 'r')
     outf = open(outpath, 'w')
 
-    for i,line in enumerate(inf):
+    for line in inf:
         splitline = line.split('\t')
         # Skip short lines, which are dirty beyond repair, anyway.
         if len(splitline) < 6:
@@ -119,6 +119,8 @@ ufo = read_table('data/ufo/ufo_awesome_6col.tsv', sep = '\t', na_values = '',
                                          'duration',
                                          'long_desc'])
 
+# Print the beginning of the data; compare to table on p. 14.
+print ufo.head(6).to_string(formatters = {'long_desc' : lambda x : x[ :21]})
 
 #########################################
 # Converting and cleaning up date data. #
