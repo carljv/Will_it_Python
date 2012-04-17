@@ -23,11 +23,9 @@ and `outpath` variables at the start of the file.
 
 For a detailed description of the analysis and the process of porting it
 to Python, see: slendrmeans.wordpress.com/will-it-python.
-
-
 '''
 
-# Import libraries 
+
 import numpy as np
 from pandas import *
 import matplotlib.pyplot as plt
@@ -38,10 +36,12 @@ import re
 # The location of the UFO raw data
 inpath = 'data/ufo/ufo_awesome.tsv'
 
-### Fixing extrac columns in the raw data. ###
+#########################################
+# Fixing extra columns in the raw data. #
+#########################################
 # Pandas' read_table function gives an error reading the raw data file
 # `ufo_awesome.tsv`. It turns out there are extra tabs in some of the fields,
-# generated extra (>6) columns.
+# generating extra (>6) columns.
 
 # A test: read lines from the file until we reach a line with more than 6
 # tab-separated columns. Then print the line. I use enumerate() to identify
@@ -55,7 +55,7 @@ for i, line in enumerate(inf):
     splitline = line.split('\t')
     if len(splitline) != 6:
         first_bad_line = splitline
-        print i
+        print "First bad row:", i
         for j, col in enumerate(first_bad_line):
             print j, col
         break
@@ -72,9 +72,8 @@ def ufotab_to_sixcols(inpath, outpath):
 
     The UFO data set is only supposed to have six columns. But...
 
-    The sixth column is a long written description of the UFO
-    sighting, and sometimes is broken by tab characters which create extra
-    columns.
+    The sixth column is a long written description of the UFO sighting, and
+    sometimes is broken by tab characters which create extra columns.
 
     For these records, we only keep the first six columns. This typically cuts
     off some of the long description.
@@ -121,8 +120,9 @@ ufo = read_table('data/ufo/ufo_awesome_6col.tsv', sep = '\t', na_values = '',
                                          'long_desc'])
 
 
-
-### Converting and cleaning up date data. ###
+#########################################
+# Converting and cleaning up date data. #
+#########################################
 # Unlike the R import, Pandas' read_table pulled the dates in as integers
 # in YYYYMMDD format. We'll use the function below and map() it to the
 # date columns in the data.
@@ -145,8 +145,9 @@ ufo['date_reported'] = ufo['date_reported'].map(ymd_convert)
 # Get rid of the rows that couldn't be conformed to datetime.
 ufo = ufo[(notnull(ufo['date_reported'])) & (notnull(ufo['date_occurred']))]
 
-
-### Organizing location data. ###
+#############################
+# Organizing location data. #
+#############################
 # Note on p. 16 the authors claim strsplit() throws an error if there is no
 # comma in the entry. This doesn't appear to be true.
 
@@ -234,6 +235,10 @@ ufo_us = ufo[ufo['us_state'] != '']
 years = ufo_us['date_occurred'].map(lambda x: x.year)
 years.describe()
 
+
+###########################################################################
+# Plot distribution of sigthings over time and subset to recent sigthings #
+###########################################################################
 # Figure 1-5 of the text. Note it's over years, and not the original
 # `date_occured` variable. Matplotlib apparently can't draw histograms
 # of datetimes.
@@ -253,7 +258,7 @@ ufo_us.shape
 # Check how many sightings we saved with the regex version of the
 # location-cleaning function.
 city_commas = ufo['us_city'].map(lambda x: x.count(','))
-print 'Cities with commas = %i' % sum(city_commas > 0)
+print 'Cities with commas = ', sum(city_commas > 0)
 
 # Figure 1-6 in the text.
 plt.figure()
@@ -271,20 +276,25 @@ post90_count.plot()
 plt.title('Number of U.S. UFO sightings\nJanuary 1990 through August 2010')
 plt.savefig('post90_count_ts.png')
 
-### Get monthly sightings by state ###
-
+##################################
+# Get monthly sightings by state #
+##################################
 # Aggregate data to the state/month level with Pandas' groupby() method.
 ufo_us['year_month'] = ufo_us['date_occurred'].map(lambda x:
                                                    dt.date(x.year, x.month, 1))
 
 sightings_counts = ufo_us.groupby(['us_state',
                                    'year_month'])['year_month'].count()
-sightings_counts.ix['ak'].head(6)
 
 # Check out Alaska to compare with p. 22. Note we get an extra row, which
 # results from the improved location cleaning.
+print 'First few AK sightings in data:'
+print sightings_counts.ix['ak'].head(6)
+
+print 'Extra AK sighting, no on p. 22:'
 print ufo_us[(ufo_us['us_state'] == 'ak') &
-             (ufo_us['year_month'] == dt.date(1994, 2, 1))]['location']
+             (ufo_us['year_month'] == dt.date(1994, 2, 1))] \
+             [['year_month','location']]
 
 # Since groupby drops state-month levels for which there are no sightings,
 # we'll create a 2-level MultiIndex with the full range of state-month pairs.
@@ -299,8 +309,9 @@ full_index = MultiIndex.from_tuples(full_index, names =
 
 sightings_counts = sightings_counts.reindex(full_index, fill_value = 0)
 
-
-### Plot monthly sightings by state in lattice/facet-wrap plot ###
+##############################################################
+# Plot monthly sightings by state in lattice/facet-wrap plot #
+##############################################################
 # Subplot parameters. We set up a figures with MxN subplots, where MxN >= 51
 # (no. of states to plot). When MxN > 51, the `hangover` variable counts how
 # many extra subplot remain in the last row of figure. We'll need this to
