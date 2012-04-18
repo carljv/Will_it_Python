@@ -1,14 +1,15 @@
-# Will it Python?
+Will it Python?
+===============
 
 Introduction
 ------------
-/Will it Python?/ programs are ports of data analyses originally done in R into Python. The projects are accompanied by a series of blog posts documenting the porting-process. See [[http://slendrmeans.wordpress.com/will-it-python][slendrmeans.wordpress.com/will-it-python]] for more information.
+_Will it Python?_ programs are ports of data analyses originally done in R into Python. The projects are accompanied by a series of blog posts documenting the porting-process. See http://slendrmeans.wordpress.com/will-it-python for more information.
 
 Projects:
 ---------
 The code is organized into subfolders by translation project. The projects so far are:
 
-1. MLFH: /Machine Learning for Hackers/ by Drew Conway and John Myles White.
+1. MLFH: _Machine Learning for Hackers_ by Drew Conway and John Myles White.
 
 Software:
 ---------
