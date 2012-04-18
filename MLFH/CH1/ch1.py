@@ -173,11 +173,10 @@ def get_location(l):
     return clean_location
 
 # As an alternative to the one-comma method for finding U.S. locations,
-# we try an alternative, using a regular expression that looks for entries
-# that end in a comma and two letters (e.g., `, MD`) after stripping extra
-# white space.
+# we try using a regular expression that looks for entries that end in a
+# comma and two letters (e.g., `, MD`) after stripping extra white space.
 
-# Since the regexp is going to be mapped along a Series of data, we'll
+# Since the regexp is going to be mapped along a Series of data, we'll 
 # compile it first.
 us_state_pattern = re.compile(', [A-Z][A-Z]$', re.IGNORECASE)
 
