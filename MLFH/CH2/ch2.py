@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# <nbformat>2</nbformat>
-
-
-
 ''''
 -------------------------------------------------------------------------------
 Filename   : ch2.ipynb
@@ -29,16 +24,13 @@ For a detailed description of the analysis and the process of porting it
 to Python, see: slendrmeans.wordpress.com/will-it-python.
 '''
 
-
-
 import numpy as np
 from pandas import *
 import matplotlib.pyplot as plt
-from scipy.stats import kde
 import os
-import statsmodels.api as sm
-from statsmodels.api import GLM, Logit
+from statsmodels.nonparametric.kde import KDE
 from statsmodels.nonparametric import lowess
+from statsmodels.api import GLM, Logit
 
 # Numeric Summaries
 # p. 37
@@ -61,9 +53,8 @@ def my_median(x):
     '''
     
     # Get a sorted copy of the values in the series (need to call values
-    # otherwise integer indexing messes things up.
-    sorted_x = x.values.copy()
-    sorted_x.sort()
+    # otherwise integer indexing messes things up.)
+    sorted_x = np.sort(x.values)
     if len(x) % 2 == 0:
         indices = [0.5 * len(x) - 1, 0.5 * len(x)]
         return np.mean(sorted_x[indices])
@@ -73,18 +64,19 @@ def my_median(x):
         index = ceil(0.5 * len(x)) - 1
         return sorted_x.ix[index]
 
-
-
 # Check my_mean and my_median against built-ins
+
 my_mean(heights) - heights.mean()
+
 my_median(heights) - heights.median()
 
-
 # Quantiles (p. 40)
+
 heights.min(), heights.max()
 
+# Range = max - min. Note: np.ptp(heights.values) will do the same thing.
+# HT Nathaniel Smith
 
-# I don't see that pandas has a .range() method for columns, but it's trivial to implement
 def my_range(s):
     '''
     Difference between the max and min of an array or Series
@@ -92,7 +84,6 @@ def my_range(s):
     return s.max() - s.min()
 
 my_range(heights)
-
 
 # Similarly, pandas doesn't seem to provide multiple quantiles. 
 # But (1) the standard ones are available via .describe() and
@@ -128,6 +119,7 @@ my_quantiles(heights)
 my_quantiles(heights, prob = arange(0, 1.1, 0.1))
 
  # Standard deviation and variances
+
 def my_var(x):
     return np.sum((x - x.mean())**2) / (len(x) - 1)
 
@@ -139,6 +131,7 @@ def my_sd(x):
 my_sd(heights) - heights.std()
 
 # Exploratory Data Visualization (p. 44)
+
 # Histograms
 
 # 1-inch bins
@@ -157,57 +150,68 @@ heights.hist(bins = bins001, fc = 'steelblue')
 plt.savefig('height_hist_bins001.png')
 
 # Kernel density estimators, from scipy.stats.
-density = kde.gaussian_kde(heights.values)
+
+# Create a KDE ojbect
+heights_kde = KDE(heights)
+# Use fit() to estimate the densities. Default is gaussian kernel 
+# using fft. This will provide a "density" attribute.
+heights_kde.fit()
 
 # Plot the density of the heights
 # Sort inside the plotting so the lines connect nicely.
 fig = plt.figure()
-plt.plot(np.sort(heights.values), density(np.sort(heights.values)))
+plt.plot(heights_kde.support, heights_kde.density)
 plt.savefig('heights_density.png')
 
 # Pull out male and female heights as arrays over which to compute densities
+
 heights_m = heights[heights_weights['Gender'] == 'Male'].values
 heights_f = heights[heights_weights['Gender'] == 'Female'].values
-density_m = kde.gaussian_kde(heights_m)
-density_f = kde.gaussian_kde(heights_f)
+heights_m_kde = KDE(heights_m)
+heights_f_kde = KDE(heights_f)
+heights_m_kde.fit()
+heights_f_kde.fit()
 
 fig = plt.figure()
-plt.plot(np.sort(heights_m), density_m(np.sort(heights_m)), label = 'Male')
-plt.plot(np.sort(heights_f), density_f(np.sort(heights_f)), label = 'Female')
+plt.plot(heights_m_kde.support, heights_m_kde.density, label = 'Male')
+plt.plot(heights_f_kde.support, heights_f_kde.density, label = 'Female')
 plt.legend()
 plt.savefig('height_density_bysex.png')                
 
 # Do the same thing with weights.
 weights_m = heights_weights[heights_weights['Gender'] == 'Male']['Weight'].values
 weights_f = heights_weights[heights_weights['Gender'] == 'Female']['Weight'].values
-density_m = kde.gaussian_kde(weights_m)
-density_f = kde.gaussian_kde(weights_f)
+weights_m_kde = KDE(weights_m)
+weights_f_kde = KDE(weights_f)
+weights_m_kde.fit()
+weights_f_kde.fit()
+
 
 fig = plt.figure()
-plt.plot(np.sort(weights_m), density_m(np.sort(weights_m)), label = 'Male')
-plt.plot(np.sort(weights_f), density_f(np.sort(weights_f)), label = 'Female')
+plt.plot(weights_m_kde.support, weights_f_kde.density, label = 'Male')
+plt.plot(weights_f_kde.support, weights_f_kde.density, label = 'Female')
 plt.legend()
 plt.savefig('weight_density_bysex.png')
 
 # Subplot weight density by sex.
 fig, axes = plt.subplots(nrows = 2, ncols = 1, sharex = True, figsize = (9, 6))
 plt.subplots_adjust(hspace = 0.1)
-axes[0].plot(np.sort(weights_f), density_f(np.sort(weights_f)), label = 'Female')
+axes[0].plot(weights_f_kde.support, weights_f_kde.density, label = 'Female')
 axes[0].xaxis.tick_top()
 axes[0].legend()
-axes[1].plot(np.sort(weights_m), density_m(np.sort(weights_m)), label = 'Male')
+axes[1].plot(weights_m_kde.support, weights_f_kde.density, label = 'Male')
 axes[1].legend()
 plt.savefig('weight_density_bysex_subplot.png')
 
 # Scatter plot. Pull weight (both sexes) out as a separate array first, like 
 # we did with height above.
+
 weights = heights_weights['Weight']
 plt.plot(heights, weights, '.k', mew = 0, alpha = .1)
 plt.savefig('height_weight_scatter.png')
 
-
-
 # Lowess smoothing - this seems to be new functionality not yet in docs (as of 0.40, April 2012).
+
 lowess_line = lowess.lowess(weights, heights)
 
 plt.figure(figsize = (13, 9))
@@ -261,7 +265,3 @@ plt.plot(heights_m, weights_m, '.', label = 'Male', mew = 0, mfc='steelblue', al
 plt.plot(array([50, 80]), intercept + slope * array([50, 80]), '-', color = '#461B7E')
 plt.legend(loc='upper left')
 plt.savefig('height_weight_class.png')
-
-
-
-
