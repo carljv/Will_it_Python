@@ -24,13 +24,18 @@ For a detailed description of the analysis and the process of porting it
 to Python, see: slendrmeans.wordpress.com/will-it-python.
 '''
 
+
+
 import numpy as np
 from pandas import *
 import matplotlib.pyplot as plt
 import os
+import statsmodels.api as sm
 from statsmodels.nonparametric.kde import KDE
 from statsmodels.nonparametric import lowess
 from statsmodels.api import GLM, Logit
+
+
 
 # Numeric Summaries
 # p. 37
@@ -43,7 +48,6 @@ heights = heights_weights['Height']
 heights.describe()
 
 # Means, medians, and modes (p. 38)
-
 def my_mean(x):
     return float(np.sum(x)) / len(x)
 
@@ -64,19 +68,21 @@ def my_median(x):
         index = ceil(0.5 * len(x)) - 1
         return sorted_x.ix[index]
 
-# Check my_mean and my_median against built-ins
 
+
+# Check my_mean and my_median against built-ins
 my_mean(heights) - heights.mean()
 
 my_median(heights) - heights.median()
 
-# Quantiles (p. 40)
 
+
+# Quantiles (p. 40)
 heights.min(), heights.max()
+
 
 # Range = max - min. Note: np.ptp(heights.values) will do the same thing.
 # HT Nathaniel Smith
-
 def my_range(s):
     '''
     Difference between the max and min of an array or Series
@@ -84,6 +90,7 @@ def my_range(s):
     return s.max() - s.min()
 
 my_range(heights)
+
 
 # Similarly, pandas doesn't seem to provide multiple quantiles. 
 # But (1) the standard ones are available via .describe() and
@@ -118,8 +125,7 @@ my_quantiles(heights)
 # With a specific prob argument - here deciles
 my_quantiles(heights, prob = arange(0, 1.1, 0.1))
 
- # Standard deviation and variances
-
+# Standard deviation and variances
 def my_var(x):
     return np.sum((x - x.mean())**2) / (len(x) - 1)
 
@@ -133,7 +139,6 @@ my_sd(heights) - heights.std()
 # Exploratory Data Visualization (p. 44)
 
 # Histograms
-
 # 1-inch bins
 bins1 = np.arange(heights.min(), heights.max(), 1.)
 heights.hist(bins = bins1, fc = 'steelblue')
@@ -150,7 +155,6 @@ heights.hist(bins = bins001, fc = 'steelblue')
 plt.savefig('height_hist_bins001.png')
 
 # Kernel density estimators, from scipy.stats.
-
 # Create a KDE ojbect
 heights_kde = KDE(heights)
 # Use fit() to estimate the densities. Default is gaussian kernel 
@@ -164,7 +168,6 @@ plt.plot(heights_kde.support, heights_kde.density)
 plt.savefig('heights_density.png')
 
 # Pull out male and female heights as arrays over which to compute densities
-
 heights_m = heights[heights_weights['Gender'] == 'Male'].values
 heights_f = heights[heights_weights['Gender'] == 'Female'].values
 heights_m_kde = KDE(heights_m)
@@ -178,6 +181,7 @@ plt.plot(heights_f_kde.support, heights_f_kde.density, label = 'Female')
 plt.legend()
 plt.savefig('height_density_bysex.png')                
 
+
 # Do the same thing with weights.
 weights_m = heights_weights[heights_weights['Gender'] == 'Male']['Weight'].values
 weights_f = heights_weights[heights_weights['Gender'] == 'Female']['Weight'].values
@@ -186,12 +190,12 @@ weights_f_kde = KDE(weights_f)
 weights_m_kde.fit()
 weights_f_kde.fit()
 
-
 fig = plt.figure()
 plt.plot(weights_m_kde.support, weights_f_kde.density, label = 'Male')
 plt.plot(weights_f_kde.support, weights_f_kde.density, label = 'Female')
 plt.legend()
 plt.savefig('weight_density_bysex.png')
+
 
 # Subplot weight density by sex.
 fig, axes = plt.subplots(nrows = 2, ncols = 1, sharex = True, figsize = (9, 6))
@@ -205,18 +209,17 @@ plt.savefig('weight_density_bysex_subplot.png')
 
 # Scatter plot. Pull weight (both sexes) out as a separate array first, like 
 # we did with height above.
-
 weights = heights_weights['Weight']
 plt.plot(heights, weights, '.k', mew = 0, alpha = .1)
 plt.savefig('height_weight_scatter.png')
 
-# Lowess smoothing - this seems to be new functionality not yet in docs (as of 0.40, April 2012).
 
+# Lowess smoothing - this seems to be new functionality not yet in docs (as of 0.40, April 2012).
 lowess_line = lowess.lowess(weights, heights)
 
 plt.figure(figsize = (13, 9))
 plt.plot(heights, weights, '.', mfc = 'steelblue', mew=0, alpha = .25)
-plt.plot(lowess_line[:,0], lowess_line[:, 1], '-', color = '#461B7E', label = "Lowess fit")
+plt.plot(lowess_line[:,0], lowess_line[:, 1],  '-', color = '#461B7E', label = "Lowess fit")
 plt.legend(loc = "upper left")
 plt.savefig('height_weight_lowess.png')
 
@@ -238,6 +241,7 @@ logit_model.fit().summary()
 
 # Get the coefficient parameters.
 logit_pars = logit_model.fit().params
+
 
 # Logit model 2: Using the Logit function.
 logit_model2 = Logit(male, sm.add_constant(hw_exog, prepend = True))
@@ -265,3 +269,4 @@ plt.plot(heights_m, weights_m, '.', label = 'Male', mew = 0, mfc='steelblue', al
 plt.plot(array([50, 80]), intercept + slope * array([50, 80]), '-', color = '#461B7E')
 plt.legend(loc='upper left')
 plt.savefig('height_weight_class.png')
+
