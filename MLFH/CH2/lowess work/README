@@ -1,0 +1,29 @@
+Files for an improved version of statsmodel's lowess.
+
+cylowess.pyx is Cython code for a faster version of the lowess function
+in statsmodels.nonparametric.lowess.
+
+This code is more or less a from-scratch re-write, borrowing from both 
+statsmodel's lowess, and from W. Cleveland's original lowess.f Fortran code.
+
+The main speed improvements come from:
+
+1. Replacing expensive lstsq() calls in the statsmodel versions with direct
+   calculations of the fitted y-values.
+2. General Cython-based speedups for simple procedures in tight loops (like
+   updating k-nearest neighbors).
+3. But mostly the implementation of local linear interpolation via the new
+   delta parameter. This vastly reduces the amount of times weighted regressions
+   are run with minimal effect on the results. The idea, is to only run regression
+   at points spaced at most `delta` apart, then linearly interpolate between those
+   two results.
+   For moderate to large data (N > 5000) this cuts timings about 50-100x--from 
+   seconds to milliseconds Currently, the default delta is zero, so the feature
+   is not implemented unless explicitly set by the user. This should probably
+   change.
+
+See the IPython notebook for comparisons with statsmodels and R lowess. CSV files
+are exported R data that are loaded into the notebook.
+
+-C. Vogel
+ May 2012
