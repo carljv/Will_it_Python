@@ -196,7 +196,8 @@ def lowess(np.ndarray[DTYPE_t, ndim = 1] endog,
                                        right_end, radius, robiter > 0)
 
             # If ok, run the regression
-            calculate_y_fit(x, y, i, y_fit, weights, left_end, right_end, reg_ok)
+            calculate_y_fit(x, y, i, y_fit, weights, left_end, right_end,
+                            reg_ok)
 
             # If we skipped some points (because of how delta was set), go back
             # and fit them by linear interpolation.
@@ -349,7 +350,8 @@ cdef bool calculate_weights(np.ndarray[DTYPE_t, ndim = 1] x,
         tricube(weights[left_end:right_end])
     if use_resid_weights == True:
         tricube(weights[left_end:right_end])
-        weights[left_end:right_end] = weights[left_end:right_end] * resid_weights[left_end:right_end]
+        weights[left_end:right_end] = (weights[left_end:right_end] *
+                                          resid_weights[left_end:right_end])
 
     sum_weights = np.sum(weights[left_end:right_end])
 
