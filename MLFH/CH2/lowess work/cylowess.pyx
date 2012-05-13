@@ -512,7 +512,7 @@ def update_indices(np.ndarray[DTYPE_t, ndim = 1] x,
     # copying the results for any repeated x's along the way.
     cutpoint = x[last_fit_i] + delta
     for k in range(last_fit_i + 1, n):
-        if x[k] >= cutpoint:
+        if x[k] > cutpoint:
             break
         if x[k] == x[last_fit_i]:
             # if tied with previous x-value, just use the already

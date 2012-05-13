@@ -83,7 +83,8 @@ data(mcycle)
 #####
 #####
 delta.0.out = lowess(mcycle, f = 0.1, delta = 0.0)
-delta.default.out = lowess(mcycle, f = 0.1, accel)
+delta.default.out = lowess(mcycle, f = 0.1)
+delta.1.out = lowess(mcycle, f = 0.1, delta = 1.0)
 
 print("mcycle x values")
 paste(mcycle$times, collapse = ", ")
@@ -95,3 +96,5 @@ print("Delta test outputs")
 paste(round(delta.0.out$y, 10), collapse = ", ")
 
 paste(round(delta.default.out$y, 10), collapse = ", ")
+
+paste(round(delta.1.out$y, 10), collapse = ", ")
